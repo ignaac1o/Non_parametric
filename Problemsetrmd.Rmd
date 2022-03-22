@@ -1,0 +1,295 @@
+---
+title: "Problem Set"
+author: "Alberto José Díaz Cuenca and Ignacio Almodóvar Cárdenas"
+date: "21/3/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Exercise 5.11**. The challenger.txt dataset contains information regarding the state of the solid rocket
+boosters after launch for 23 shuttle flights prior the Challenger launch. Each row has, among others,
+the variables fail.fiel (indicator of whether there was an incident with the O-rings), nfail.field
+(number of incidents with the O-rings), and temp (temperature in the day of launch, measured in
+Celsius degrees).
+
+a. Fit a local logistic regression (first degree) for fails.field ~ temp, for three choices of bandwidths:
+one that oversmooths, another that is somehow adequate, and another that undersmooths. Do the
+effects of temp on fails.field seem to be significant?
+
+First of all, we star by reading our data. 
+
+```{r}
+data <- read.table("challenger.txt", header = TRUE)
+
+Y <- data$fail.field
+X <- data$temp
+```
+
+Employ locfit. Bandwidth can not be controlled explicitly -- only through nn in ?lp
+
+```{r}
+h=0.22
+fit_locfit <- locfit::locfit(Y ~ locfit::lp(X, deg = 1, nn = h),
+                             family = "binomial", kern = "gauss")
+h2 = 0.55
+fit_locfit2 <-locfit::locfit(Y ~ locfit::lp(X, deg = 1, nn = h2),
+                               family = "binomial", kern = "gauss")
+
+h3 = 2
+fit_locfit3 <-locfit::locfit(Y ~ locfit::lp(X, deg = 1, nn = h3),
+                               family = "binomial", kern = "gauss")
+```
+
+Plotting the results.
+
+```{r}
+plot(fit_locfit, col=1)
+plot(fit_locfit2,add=TRUE, col=2)
+plot(fit_locfit3,add=TRUE, col=3)
+legend("topright", legend = c("h=0.25", "h=0.5", "h=2"), col=c(1,2,3), lty = c(1,1,1))
+plot(X,Y, type="p")
+```
+
+b. Obtain $\hat{h}LCV$ and plot the LCV function with a reasonable accuracy.
+length(X)
+
+```{r}
+# Exact LCV
+h <- seq(0.25, 2, by = 0.1)
+n=23
+suppressWarnings(
+  LCV <- sapply(h, function(h) {
+  sum(sapply(1:n, function(i) {
+    K <- dnorm(x = X[i], mean = X[-i], sd = h)
+    nlm(f = function(beta) {
+      -sum(K * (Y[-i] * (beta[1] + beta[2] * (X[-i] - X[i])) -
+                  log(1 + exp(beta[1] + beta[2] * (X[-i] - X[i])))))
+      }, p = c(10,10))$minimum
+    }))
+  })
+)
+plot(h, LCV, type = "o") + abline(v = h[which.max(LCV)], col = 2)
+h[which.max(LCV)]
+```
+
+c. Using $\hat{h}LCV$, predict the probability of an incident at temperatures −0.6 (launch temperature of
+the Challenger) and 11.67 (specific recommendation by the vice president of engineers).
+
+```{r}
+hlcv <- 0.65
+fit_locfit_lcv <- locfit::locfit(Y ~ locfit::lp(X, deg = 1, nn = hlcv),
+                             family = "binomial", kern = "gauss")
+predict(fit_locfit, c(23,27))
+```
+d. What are the local odds at −0.6 and 11.67? Show the local logistic models about these points, in
+spirit of Figure 5.1, and interpret the results.
+
+
+
+
+
+**Exercise 4.9**. Perform the following tasks:
+a. Code your own implementation of the local cubic estimator. The function must take as input the
+vector of evaluation points x, the sample data, and the bandwidth h. Use the normal kernel. The
+result must be a vector of the same length as x containing the estimator evaluated at x.
+
+```{r}
+# A naive implementation of the Nadaraya-Watson estimator
+nw <- function(x, X, Y, h, K = dnorm) {
+
+  # Arguments
+  # x: evaluation points
+  # X: vector (size n) with the predictors
+  # Y: vector (size n) with the response variable
+  # h: bandwidth
+  # K: kernel
+
+  # Matrix of size n x length(x) (rbind() is called for ensuring a matrix
+  # output if x is a scalar)
+  Kx <- rbind(sapply(X, function(Xi) K((x - Xi) / h) / h))
+
+  # Weights
+  W <- Kx / rowSums(Kx) # Column recycling!
+
+  # Means at x ("drop" to drop the matrix attributes)
+  drop(W %*% Y)
+
+}
+
+# Generate some data to test the implementation
+set.seed(12345)
+n <- 100
+eps <- rnorm(n, sd = 2)
+m <- function(x) x^2 * cos(x)
+# m <- function(x) x - x^2 # Works equally well for other regression function
+X <- rnorm(n, sd = 2)
+Y <- m(X) + eps
+x_grid <- seq(-10, 10, l = 500)
+
+# Bandwidth
+h <- 0.5
+
+# Plot data
+plot(X, Y) + rug(X, side = 1); rug(Y, side = 2) + lines(x_grid, m(x_grid), col = 1) + lines(x_grid, nw(x = x_grid, X = X, Y = Y, h = h), col = 2)
+legend("top", legend = c("True regression", "Nadaraya-Watson"),
+       lwd = 2, col = 1:2)
+x_grid-X
+
+
+```
+
+
+
+**Exercise 3.31**. Implement the Euler method for f being f_oval, f_croissant, and f_sin, in order
+to reproduce Figure 3.18. You will have to:
+
+Implement the gradient and Hessian of f. To avoid computing the analytical form, you can rely on
+numDeriv::grad and numDeriv::hessian to evaluate numerically Df and Hf (although this will
+run slower than the analytical form).
+
+
+```{r}
+# Our functions 
+
+# "Oval" density
+f_oval <- function(x, mu = 2, sigma = 0.35, 
+                   Sigma = rbind(c(1, -0.71), c(-0.71, 2))) {
+  
+  # x always as a matrix
+  x <- rbind(x)
+  
+  # Rotate x with distortion
+  Sigma_inv_sqrt <- solve(chol(Sigma))
+  x <- x %*% Sigma_inv_sqrt
+  
+  # Polar coordinates
+  r <- sqrt(rowSums(x^2))
+  
+  # Density as conditional * marginal
+  f_theta <- 1 / (2 * pi)
+  f_r_theta <- dnorm(x = r, mean = mu, sd = sigma)
+  jacobian <-  det(Sigma_inv_sqrt) / r
+  f <- f_r_theta * f_theta * jacobian
+  return(f)
+  
+}
+
+```
+
+
+```{r}
+# "Croissant" density
+f_crois <- function(x, mu = 2, sigma = 0.5, mu_theta = pi / 2, kappa = 1) {
+
+  # x always as a matrix
+  x <- rbind(x)
+
+  # Polar coordinates
+  theta <- atan2(x[, 2], x[, 1])
+  r <- sqrt(rowSums(x^2))
+
+  # Density as conditional * marginal
+  f_theta <- exp(kappa * cos(theta - mu_theta)) / 
+    (2 * pi * besselI(kappa, nu = 0))
+  f_r_theta <- dnorm(x = r, mean = mu, sd = sigma)
+  jacobian <- 1 / r
+  f <- f_r_theta * f_theta * jacobian
+  return(f)
+
+}
+```
+
+
+
+
+
+
+```{r}
+# Projection of the gradient
+library(dplyr)
+x <- seq(-3.5,3.5,l=12)
+xx <- as.matrix(expand.grid(x,x))
+
+# Projected gradient into the Hessian s-th eigenvector subspace
+proj_grad_norm <- function(x, mu, Sigma, s = 2) {
+  
+  # Gradient
+  grad <- numDeriv::grad(f_crois,x) %>% as.matrix() %>% t()
+  
+  # Hessian
+  Hess <- numDeriv::hessian(f_crois,x)
+  
+  # Eigenvectors Hessian
+  eig_Hess <- function(A){
+    t(as.matrix(eigen(x = A, symmetric = TRUE)$vectors[, s]))
+  } 
+  eig_hess <- eig_Hess(Hess)
+  
+  # Projected gradient
+  proj_grad <- t(sapply(1:nrow(eig_hess), function(i) {
+    tcrossprod(eig_hess[i,]) %*% grad[i,]
+  }))
+  
+  # As an array
+  return(proj_grad)
+  
+}
+```
+
+
+
+
+
+
+```{r}
+# Euler solution
+plot(x=1,y=1, xlim=c(-4,4), ylim=c(-4,4))
+x0 <- as.matrix(expand.grid(seq(-3, 3, l = 12), seq(-3, 3, l = 12)))
+x <- matrix(NA, nrow = nrow(x0), ncol = 2)
+N <- 1000
+h <- 0.5
+phi <- matrix(nrow = N + 1, ncol = 2)
+eps <- 1e-4
+mu <- c(0,0)
+Sigma <- rbind(c(1, -0.71), c(-0.71, 2))
+delta <- 1.e-8
+count=0
+
+for (i in 1:nrow(x0)) {
+  
+  # Move along the flow curve
+  phi[1, ] <- x0[i, ]
+  for (t in 1:N) {
+    
+    # Euler update
+      phi[t + 1, ] <- phi[t, ] + 
+        h * proj_grad_norm(phi[t, ], mu = mu, Sigma = Sigma) /
+        mvtnorm::dmvnorm(x = phi[t, ], mean = mu, sigma = Sigma)
+      
+      # Stopping criterion (to save computing time!)
+      abs_tol <- max(abs(phi[t + 1, ] - phi[t, ]))
+      rel_tol <- abs_tol / max(abs(phi[t, ]))
+      if (abs_tol < eps | rel_tol < eps) break
+      
+  }
+  
+  # Save final point
+  x[i, ] <- phi[t + 1, , drop = FALSE]
+
+    
+  # Plot lines and x0
+  lines(phi[1:(t + 1), ], type = "l") 
+  points(x0[i, , drop = FALSE], pch = 19)
+}
+
+# Plot final points
+if(f_crois(x[i,] > 50*delta)){
+points(x, pch = 19, col = 2)
+}
+```
+
+
+
