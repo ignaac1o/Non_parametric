@@ -31,7 +31,6 @@ proj_grad_norm <- function(x, mu, Sigma, s = 2) {
 
 
 # Euler solution
-
 mu <- c(0, 0)
 Sigma <- matrix(c(1, -0.71, -0.71, 2), nrow = 2, ncol = 2)
 ks::plotmixt(mus = mu, Sigmas = Sigma, props = 1, display = "filled.contour2",
