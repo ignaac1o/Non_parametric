@@ -3,8 +3,8 @@ title: "Problem Set"
 author: "Alberto José Díaz Cuenca and Ignacio Almodóvar Cárdenas"
 date: "21/3/2022"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -17,11 +17,7 @@ library(ggplot2)
 
 ## Exercise 5.11.
 
-The challenger.txt dataset contains information regarding the state of the solid rocket
-boosters after launch for 23 shuttle flights prior the Challenger launch. Each row has, among others,
-the variables fail.field (indicator of whether there was an incident with the O-rings), nfail.field
-(number of incidents with the O-rings), and temp (temperature in the day of launch, measured in
-Celsius degrees).
+The challenger.txt dataset contains information regarding the state of the solid rocket boosters after launch for 23 shuttle flights prior the Challenger launch. Each row has, among others, the variables fail.field (indicator of whether there was an incident with the O-rings), nfail.field (number of incidents with the O-rings), and temp (temperature in the day of launch, measured in Celsius degrees).
 
 **a. Fit a local logistic regression (first degree) for fails.field ~ temp, for three choices of bandwidths: one that oversmooths, another that is somehow adequate, and another that undersmooths. Do the effects of temp on fails.field seem to be significant?**
 
@@ -59,7 +55,7 @@ Plotting the results.
 plot(fit_locfit, col=1) + lines(fit_locfit2, col=2)  + lines(fit_locfit3, col=3) + points(X,Y, type="p")
 ```
 
-**b. Obtain $\hat{h}_{LCV}$ and plot the LCV function with a reasonable accuracy.**
+**b. Obtain hLCV and plot the LCV function with a reasonable accuracy.**
 
 ```{r, results='hide'}
 # Exact LCV
@@ -86,7 +82,7 @@ h[which.max(LCV)]
 
 For this section we have used the function that computes the Least Cross Validation bandwidth estimator through likelihood cross validation. The function basically minimizes the regression model thanks to the nlm() function, using p=c(0,0) as a starting point. Both the plot and the h[which.max(LCV)] return an estimation of h=2 (relatively close to the somehow adequate h=1.5 that we used in the previous section).
 
-**c. Using hLCV, predict the probability of an incident at temperatures −0.6 (launch temperature of the Challenger) and 11.67 (specific recommendation by the vice president of engineers).**
+**c. Using hLCV, predict the probability of an incident at temperatures -0.6 (launch temperature of the Challenger) and 11.67 (specific recommendation by the vice president of engineers).**
 
 
 ```{r}
@@ -98,7 +94,7 @@ prediction
 ```
 We have obtained probabilities of 0.9998206 and 0.9535512 respectively for -0.6 and 11.67 degrees. Obviously, it is highly probable to have an incident with any of these temperatures. If we take a look at the plot of the regression model, we can see that, for temperatures under approximately 15 degrees, the response variable will always return "1" as the outcome, i.e., an incident occurring. Therefore, it holds that the probabilities obtained for such low temperatures are these high. 
 
-**d. What are the local odds at −0.6 and 11.67? Show the local logistic models about these points, in spirit of Figure 5.1, and interpret the results.**
+**d. What are the local odds at -0.6 and 11.67? Show the local logistic models about these points, in spirit of Figure 5.1, and interpret the results.**
 
 Now, we can compute the local odds as follows: 
 
@@ -179,7 +175,7 @@ local_cubic=function(DF,x,h){
 
 ```
 
-**b. Test the implementation by estimating the regression function in the location model $Y = m(X) + \epsilon$, where $m(x) = (x − 1)^2$, $X \sim N (1, 1)$, and $\epsilon \sim N (0, 0.5)$. Do it for a sample of size $\texttt{n} = 500$.**
+**b. Test the implementation by estimating the regression function in the location model $Y = m(X) + \epsilon$, where $m(x) = (x - 1)^2$, $X \sim N (1, 1)$, and $\epsilon \sim N (0, 0.5)$. Do it for a sample of size $\texttt{n} = 500$.**
 
 We created a data frame with the variables X and Y. After that, we implemented the function and plotted the results to see how good the estimation is. 
 
@@ -270,7 +266,7 @@ proj_grad_norm_oval <- function(x, mu, Sigma, s = 2) {
 }
 ```
 
-Now, we had to implement the main function for the Euler solution. Here, we had some constraints that stopped the iteration if  $\|x_{t+1} − x_{t}\|_{\infty} < \epsilon \hspace{0.2cm} or \hspace{0.2cm} \|x_{t+1} − x_{t}\|_{\infty}/\|x_{t}\|_{\infty} < \epsilon$, but we added another constraint that disregarded the final points if $f(x) < 50*\delta$. For this, we implemented this constraint before plotting the final points, allowing to plot the points that only satisfy this constraint.  
+Now, we had to implement the main function for the Euler solution. Here, we had some constraints that stopped the iteration if  $\|x_{t+1} - x_{t}\|_{\infty} < \epsilon \hspace{0.2cm} or \hspace{0.2cm} \|x_{t+1} - x_{t}\|_{\infty}/\|x_{t}\|_{\infty} < \epsilon$, but we added another constraint that disregarded the final points if $f(x) < 50*\delta$. For this, we implemented this constraint before plotting the final points, allowing to plot the points that only satisfy this constraint.  
 
 ```{r, cache=TRUE}
 # Euler solution

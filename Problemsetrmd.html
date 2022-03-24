@@ -364,7 +364,7 @@ proj_grad_norm_oval &lt;- function(x, mu, Sigma, s = 2) {
   return(proj_grad)
   
 }</code></pre>
-<p>Now, we had to implement the main function for the Euler solution. Here, we had some constraints that stopped the iteration if <span class="math inline">\(\|x_{t+1} − x_{t}\|_{\infty} &lt; \epsilon \hspace{0.2cm} or \hspace{0.2cm} \|x_{t+1} − x_{t}\|_{\infty}/\|x_{t}\|_{\infty} &lt; \epsilon\)</span>, but we added another constraint that disregarded the final points if <span class="math inline">\(f(x) &lt; 50*\delta\)</span>. For this, we implemented this constraint before plotting the final points, allowing to plot the points that only satisfy this constraint.</p>
+<p>Now, we had to implement the main function for the Euler solution. Here, we had some constraints that stopped the iteration if <span class="math inline">\(\|x_{t+1} − x_{t}\|_{\infty} &lt; \epsilon \hspace{0.2cm} or \hspace{0.2cm} \|x_{t+1} - x_{t}\|_{\infty}/\|x_{t}\|_{\infty} &lt; \epsilon\)</span>, but we added another constraint that disregarded the final points if <span class="math inline">\(f(x) &lt; 50*\delta\)</span>. For this, we implemented this constraint before plotting the final points, allowing to plot the points that only satisfy this constraint.</p>
 <pre class="r"><code># Euler solution
 plot(x=1,y=1, xlim=c(-4,4), ylim=c(-4,4))
 x0 &lt;- as.matrix(expand.grid(seq(-3, 3, l = 12), seq(-3, 3, l = 12)))
