@@ -3,27 +3,27 @@ title: "Problem Set"
 author: "Alberto José Díaz Cuenca and Ignacio Almodóvar Cárdenas"
 date: "21/3/2022"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-options(tinytex.verbose = TRUE)
+library(tinytex)
 library(dplyr)
 library(MASS)
 library(ggplot2)
 ```
 
-## Exercise 5.11.
-
-The challenger.txt dataset contains information regarding the state of the solid rocket
+**Exercise 5.11**. The challenger.txt dataset contains information regarding the state of the solid rocket
 boosters after launch for 23 shuttle flights prior the Challenger launch. Each row has, among others,
 the variables fail.field (indicator of whether there was an incident with the O-rings), nfail.field
 (number of incidents with the O-rings), and temp (temperature in the day of launch, measured in
 Celsius degrees).
 
-**a. Fit a local logistic regression (first degree) for fails.field ~ temp, for three choices of bandwidths: one that oversmooths, another that is somehow adequate, and another that undersmooths. Do the effects of temp on fails.field seem to be significant?**
+a. Fit a local logistic regression (first degree) for fails.field ~ temp, for three choices of bandwidths:
+one that oversmooths, another that is somehow adequate, and another that undersmooths. Do the
+effects of temp on fails.field seem to be significant?
 
  
 
@@ -55,13 +55,15 @@ fit_locfit3 <-locfit::locfit(Y ~ locfit::lp(X, deg = 1, nn = h3),
 
 Plotting the results.
 
-```{r, results='hide'}
+```{r}
 plot(fit_locfit, col=1) + lines(fit_locfit2, col=2)  + lines(fit_locfit3, col=3) + points(X,Y, type="p")
+#legend("topright", legend = c("h=0.25", "h=0.5", "h=2"), col=c(1,2,3), lty = c(1,1,1)) 
+
 ```
 
-**b. Obtain $\hat{h}_{LCV}$ and plot the LCV function with a reasonable accuracy.**
+b. Obtain hLCV and plot the LCV function with a reasonable accuracy.
 
-```{r, results='hide'}
+```{r}
 # Exact LCV
 h <- seq(0.5, 5, by = 0.1)
 n=23
@@ -77,16 +79,12 @@ suppressWarnings(
   })
 )
 plot(h, LCV, type = "o") + abline(v = h[which.max(LCV)], col = 2)
-```
-
-
-```{r}
 h[which.max(LCV)]
 ```
 
 For this section we have used the function that computes the Least Cross Validation bandwidth estimator through likelihood cross validation. The function basically minimizes the regression model thanks to the nlm() function, using p=c(0,0) as a starting point. Both the plot and the h[which.max(LCV)] return an estimation of h=2 (relatively close to the somehow adequate h=1.5 that we used in the previous section).
 
-**c. Using hLCV, predict the probability of an incident at temperatures −0.6 (launch temperature of the Challenger) and 11.67 (specific recommendation by the vice president of engineers).**
+c. Using hLCV, predict the probability of an incident at temperatures −0.6 (launch temperature of the Challenger) and 11.67 (specific recommendation by the vice president of engineers).
 
 
 ```{r}
@@ -98,7 +96,8 @@ prediction
 ```
 We have obtained probabilities of 0.9998206 and 0.9535512 respectively for -0.6 and 11.67 degrees. Obviously, it is highly probable to have an incident with any of these temperatures. If we take a look at the plot of the regression model, we can see that, for temperatures under approximately 15 degrees, the response variable will always return "1" as the outcome, i.e., an incident occurring. Therefore, it holds that the probabilities obtained for such low temperatures are these high. 
 
-**d. What are the local odds at −0.6 and 11.67? Show the local logistic models about these points, in spirit of Figure 5.1, and interpret the results.**
+d. What are the local odds at −0.6 and 11.67? Show the local logistic models about these points, in
+spirit of Figure 5.1, and interpret the results.
 
 Now, we can compute the local odds as follows: 
 
@@ -113,7 +112,7 @@ In order to show the local logistic model for these points, we need to give a di
 
 First, we use X=-0.6 and Y=1.
 
-```{r, results='hide'}
+```{r}
 logistic <- function(x) 1 / (1 + exp(-x))
 Xev = -0.6
 Yev=1
@@ -133,7 +132,7 @@ plot(x,logistic(fit_nlm_local1), type="l", xlim = c(0,30)) + plot(fit_locfit_lcv
 
 Now, the same but with X = 1.67 and Y = 1.
 
-```{r, results='hide'}
+```{r}
 Xev2 <- 11.67
 logistic <- function(x) 1 / (1 + exp(-x))
 Yev=1
@@ -151,10 +150,12 @@ suppressWarnings(
 plot(fit_locfit_lcv, col = 4) + plot(x,logistic(fit_nlm_local2), col=2, type="l") 
 ```
 
-Thanks to all these plots we can see that, as in Figure 5.1, the local logistic estimated model for the points evaluated and the points in the original plots coincide, which is what we were looking for.   
+Thanks to all these plots we can see that, as in Figure 5.1, the local logistic estimated model for the points evaluated and the points in the original plots coincide.  
 
-## Exercise 4.9. Perform the following tasks:
-**a. Code your own implementation of the local cubic estimator. The function must take as input the vector of evaluation points x, the sample data, and the bandwidth h. Use the normal kernel. The result must be a vector of the same length as x containing the estimator evaluated at x.**
+**Exercise 4.9**. Perform the following tasks:
+a. Code your own implementation of the local cubic estimator. The function must take as input the
+vector of evaluation points x, the sample data, and the bandwidth h. Use the normal kernel. The
+result must be a vector of the same length as x containing the estimator evaluated at x.
 
 For this exercise, we have used the derivation of a general local linear estimator (for any p). From there, we have implemented the equations needed to obtain the local cubic estimator. These equations result mainly from the multiplication of the matrices X, W and Y and we had to create them.
 
@@ -179,7 +180,7 @@ local_cubic=function(DF,x,h){
 
 ```
 
-**b. Test the implementation by estimating the regression function in the location model $Y = m(X) + \epsilon$, where $m(x) = (x − 1)^2$, $X \sim N (1, 1)$, and $\epsilon \sim N (0, 0.5)$. Do it for a sample of size $\texttt{n} = 500$.**
+b. Test the implementation by estimating the regression function in the location model.
 
 We created a data frame with the variables X and Y. After that, we implemented the function and plotted the results to see how good the estimation is. 
 
@@ -207,7 +208,12 @@ ggplot() + geom_point(data = DF,aes(x=X,y=Y),shape=1) + geom_line(aes(x,m),col="
 
 First, we plotted the estimated regression function of the evaluation points. After that, we added the real function m applied to the evaluation points and the estimation of this function. We can clearly see that the estimation of m(x) (m(x,3,h)) is quite accurate, since it is very similar to the real m(x) and follows the same path as the estimated regression function. 
 
-## Exercise 3.31. Implement the Euler method for f being f_oval, f_croissant, and f_sin, in order to reproduce Figure 3.18.
+**Exercise 3.31**. Implement the Euler method for f being f_oval, f_croissant, and f_sin, in order
+to reproduce Figure 3.18. You will have to:
+
+- Implement the gradient and Hessian of f. To avoid computing the analytical form, you can rely on
+numDeriv::grad and numDeriv::hessian to evaluate numerically Df and Hf (although this will
+run slower than the analytical form).
 
 Let's implement the whole exercise for the function f_oval first and then adapt it to the rest of the functions. Of course, we start by computing this function. 
 
@@ -244,8 +250,13 @@ Now, we have to implement the projection of the gradient into the Hessian s-th e
 First of all, we have used the functions numDeriv::grad and numDeriv::hessian in order to obtain the gradient and the hessian of the function. Since the objects return from these functions were not the same as the ones from the grad_norm() and hess_norm() functions used before, we had to adjust them in order to make the main function work. For instance, the object grad was not a matrix at the beginning and, therefore, we could not choose the elements grad[i,], so we had to adjust this. A few other variations were made and they can be seen in the function:
 
 ```{r}
+# Projection of the gradient
+library(dplyr)
+x <- seq(-3.5,3.5,l=12)
+xx <- as.matrix(expand.grid(x,x))
+
 # Projected gradient into the Hessian s-th eigenvector subspace
-proj_grad_norm_oval <- function(x, mu, Sigma, s = 2) {
+proj_grad_norm <- function(x, mu, Sigma, s = 2) {
   
   # Gradient
   grad <- numDeriv::grad(f_oval,x) %>% as.matrix() %>% t()
@@ -270,20 +281,20 @@ proj_grad_norm_oval <- function(x, mu, Sigma, s = 2) {
 }
 ```
 
-Now, we had to implement the main function for the Euler solution. Here, we had some constraints that stopped the iteration if  $\|x_{t+1} − x_{t}\|_{\infty} < \epsilon \hspace{0.2cm} or \hspace{0.2cm} \|x_{t+1} − x_{t}\|_{\infty}/\|x_{t}\|_{\infty} < \epsilon$, but we added another constraint that disregarded the final points if $f(x) < 50*\delta$. For this, we implemented this constraint before plotting the final points, allowing to plot the points that only satisfy this constraint.  
+Now, we had to implement the main function for the Euler solution. Here, we had some constraints that stopped the iteration, but we added another constraint that disregarded the final points if f(x) < 50delta. For this, we implemented this constraint before plotting the final points, allowing to plot the points that only satisfy this constraint.  
 
 ```{r, cache=TRUE}
 # Euler solution
 plot(x=1,y=1, xlim=c(-4,4), ylim=c(-4,4))
 x0 <- as.matrix(expand.grid(seq(-3, 3, l = 12), seq(-3, 3, l = 12)))
 x <- matrix(NA, nrow = nrow(x0), ncol = 2)
-N <- 100
-h <- 0.06
+N <- 1000
+h <- 0.5
 phi <- matrix(nrow = N + 1, ncol = 2)
 eps <- 1e-4
 mu <- c(0,0)
 Sigma <- rbind(c(1, -0.71), c(-0.71, 2))
-delta <- 1.e-3
+delta <- 1.e-8
 count=0
 
 for (i in 1:nrow(x0)) {
@@ -294,8 +305,8 @@ for (i in 1:nrow(x0)) {
     
     # Euler update
       phi[t + 1, ] <- phi[t, ] + 
-        h * proj_grad_norm_oval(phi[t, ], mu = mu, Sigma = Sigma) /
-        f_oval(x = phi[t, ])
+        h * proj_grad_norm(phi[t, ], mu = mu, Sigma = Sigma) /
+        mvtnorm::dmvnorm(x = phi[t, ], mean = mu, sigma = Sigma)
       
       # Stopping criterion (to save computing time!)
       abs_tol <- max(abs(phi[t + 1, ] - phi[t, ]))
@@ -311,30 +322,17 @@ for (i in 1:nrow(x0)) {
   # Plot lines and x0
   lines(phi[1:(t + 1), ], type = "l") 
   points(x0[i, , drop = FALSE], pch = 19)
-  # if(f_crois(x[i,]) > 50*delta){
-  #   points(x=x[i,2],y=x[i,1],pch=19,col=2)
-  # }
 }
 
 # Plot final points
-for (i in 1:nrow(x)) {
-  if (f_oval(x)[i] < 50*delta){
-    x[i,] <- NA
-  }
-}
-x <- na.omit(x)
+if(f_oval(x[i,] > 50*delta)){
 points(x, pch = 19, col = 2)
-# Join the ridge points with lines in an automatic and sensible way:
-# an Euclidean Minimum Spanning Tree (EMST) problem!
-
-emst <- emstreeR::ComputeMST(x = x, verbose = FALSE)
-segments(x0 = x[emst$from, 1], y0 = x[emst$from, 2],
-         x1 = x[emst$to, 1], y1 = x[emst$to, 2], col = 2, lwd = 2)
+}
 ```
 
-Now, we do the same thing for the f_crois function.
 
-```{r, include=FALSE}
+
+```{r}
 # "Croissant" density
 f_crois <- function(x, mu = 2, sigma = 0.5, mu_theta = pi / 2, kappa = 1) {
 
@@ -355,190 +353,3 @@ f_crois <- function(x, mu = 2, sigma = 0.5, mu_theta = pi / 2, kappa = 1) {
 
 }
 ```
-
-```{r, include = FALSE}
-
-# Projected gradient into the Hessian s-th eigenvector subspace
-proj_grad_norm_crois <- function(x, mu, Sigma, s = 2) {
-  
-  # Gradient
-  grad <- numDeriv::grad(f_crois,x) %>% as.matrix() %>% t()
-  
-  # Hessian
-  Hess <- numDeriv::hessian(f_crois,x)
-  
-  # Eigenvectors Hessian
-  eig_Hess <- function(A){
-    t(as.matrix(eigen(x = A, symmetric = TRUE)$vectors[, s]))
-  } 
-  eig_hess <- eig_Hess(Hess)
-  
-  # Projected gradient
-  proj_grad <- t(sapply(1:nrow(eig_hess), function(i) {
-    tcrossprod(eig_hess[i,]) %*% grad[i,]
-  }))
-  
-  # As an array
-  return(proj_grad)
-  
-}
-```
-
-```{r, cache=TRUE, echo = FALSE}
-# Euler solution
-plot(x=1,y=1, xlim=c(-4,4), ylim=c(-4,4))
-x0 <- as.matrix(expand.grid(seq(-3, 3, l = 12), seq(-3, 3, l = 12)))
-x <- matrix(NA, nrow = nrow(x0), ncol = 2)
-N <- 100
-h <- 0.05
-phi <- matrix(nrow = N + 1, ncol = 2)
-eps <- 1e-5
-mu <- c(0,0)
-Sigma <- rbind(c(1, -0.71), c(-0.71, 2))
-delta <- 1.e-3
-count=0
-
-for (i in 1:nrow(x0)) {
-  
-  # Move along the flow curve
-  phi[1, ] <- x0[i, ]
-  for (t in 1:N) {
-    
-    # Euler update
-      phi[t + 1, ] <- phi[t, ] + 
-        h * proj_grad_norm_crois(phi[t, ], mu = mu, Sigma = Sigma) /
-        f_crois(x = phi[t, ])
-      
-      # Stopping criterion (to save computing time!)
-      abs_tol <- max(abs(phi[t + 1, ] - phi[t, ]))
-      rel_tol <- abs_tol / max(abs(phi[t, ]))
-      if (abs_tol < eps | rel_tol < eps) break
-      
-  }
-  
-  # Save final point
-  x[i, ] <- phi[t + 1, , drop = FALSE]
-
-    
-  # Plot lines and x0
-  lines(phi[1:(t + 1), ], type = "l") 
-  points(x0[i, , drop = FALSE], pch = 19)
-}
-
-# Plot final points
-for (i in 1:nrow(x)) {
-  if (f_crois(x)[i] < 50*delta){
-    x[i,] <- NA
-  }
-}
-x <- na.omit(x)
-points(x, pch = 19, col = 2)
-# Join the ridge points with lines in an automatic and sensible way:
-# an Euclidean Minimum Spanning Tree (EMST) problem!
-
-emst <- emstreeR::ComputeMST(x = x, verbose = FALSE)
-segments(x0 = x[emst$from, 1], y0 = x[emst$from, 2],
-         x1 = x[emst$to, 1], y1 = x[emst$to, 2], col = 2, lwd = 2)
-
-```
-
-Now, same thing for f_sin. 
-
-```{r, include=FALSE}
-f_sin <- function(x, a = 0.5, b = 1.75, sigma_x = 2, sigma_y = 0.5) {
-  # x always as a matrix
-  x <- rbind(x)
-  # Density as conditional * marginal
-  f_y <- dnorm(x = x[, 1], mean = 0, sd = sigma_x)
-  f_x_y <- dnorm(x = x[, 2], mean = a * (1 + x[, 1]) * sin(b * x[, 1]),
-                 sd = sigma_y)
-  f <- f_x_y * f_y
-  return(f)
-}
-```
-
-```{r, include=FALSE}
-# Projected gradient into the Hessian s-th eigenvector subspace
-proj_grad_norm_sin <- function(x, mu, Sigma, s = 2) {
-  
-  # Gradient
-  grad <- numDeriv::grad(f_sin,x) %>% as.matrix() %>% t()
-  
-  # Hessian
-  Hess <- numDeriv::hessian(f_sin,x)
-  
-  # Eigenvectors Hessian
-  eig_Hess <- function(A){
-    t(as.matrix(eigen(x = A, symmetric = TRUE)$vectors[, s]))
-  } 
-  eig_hess <- eig_Hess(Hess)
-  
-  # Projected gradient
-  proj_grad <- t(sapply(1:nrow(eig_hess), function(i) {
-    tcrossprod(eig_hess[i,]) %*% grad[i,]
-  }))
-  
-  # As an array
-  return(proj_grad)
-  
-}
-```
-
-
-```{r, echo=FALSE}
-# Euler solution
-plot(x=1,y=1, xlim=c(-4,4), ylim=c(-4,4))
-x0 <- as.matrix(expand.grid(seq(-3, 3, l = 12), seq(-3, 3, l = 12)))
-x <- matrix(NA, nrow = nrow(x0), ncol = 2)
-N <- 100
-h <- 0.05
-phi <- matrix(nrow = N + 1, ncol = 2)
-eps <- 1e-4
-mu <- c(0,0)
-Sigma <- rbind(c(1, -0.71), c(-0.71, 2))
-delta <- 1.e-3
-count=0
-
-for (i in 1:nrow(x0)) {
-  
-  # Move along the flow curve
-  phi[1, ] <- x0[i, ]
-  for (t in 1:N) {
-    
-    # Euler update
-      phi[t + 1, ] <- phi[t, ] + 
-        h * proj_grad_norm_sin(phi[t, ], mu = mu, Sigma = Sigma) /
-        f_sin(x = phi[t, ])
-      
-      # Stopping criterion (to save computing time!)
-      abs_tol <- max(abs(phi[t + 1, ] - phi[t, ]))
-      rel_tol <- abs_tol / max(abs(phi[t, ]))
-      if (abs_tol < eps | rel_tol < eps) break
-      
-  }
-  
-  # Save final point
-  x[i, ] <- phi[t + 1, , drop = FALSE]
-
-    
-  # Plot lines and x0
-  lines(phi[1:(t + 1), ], type = "l") 
-  points(x0[i, , drop = FALSE], pch = 19)
-}
-
-# Plot final points
-for (i in 1:nrow(x)) {
-  if (f_sin(x)[i] < 50*delta){
-    x[i,] <- NA
-  }
-}
-x <- na.omit(x)
-points(x, pch = 19, col = 2)
-# Join the ridge points with lines in an automatic and sensible way:
-# an Euclidean Minimum Spanning Tree (EMST) problem!
-
-emst <- emstreeR::ComputeMST(x = x, verbose = FALSE)
-segments(x0 = x[emst$from, 1], y0 = x[emst$from, 2],
-         x1 = x[emst$to, 1], y1 = x[emst$to, 2], col = 2, lwd = 2)
-```
-
